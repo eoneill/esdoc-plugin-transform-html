@@ -1,0 +1,23 @@
+{
+  "name": "esdoc-plugin-transform-html",
+  "version": "0.0.1",
+  "description": "ESDoc plugin to transform generated HTML",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eoneill/esdoc-plugin-transform-html.git"
+  },
+  "keywords": [
+    "esdoc",
+    "plugin",
+    "esdoc-plugin"
+  ],
+  "author": "eoneill",
+  "license": "ISC",
+  "dependencies": {
+    "minimatch": "^3.0.4"
+  }
+}
