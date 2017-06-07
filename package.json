@@ -1,6 +1,6 @@
 {
   "name": "esdoc-plugin-transform-html",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "ESDoc plugin to transform generated HTML",
   "main": "index.js",
   "scripts": {
@@ -13,11 +13,13 @@
   "keywords": [
     "esdoc",
     "plugin",
-    "esdoc-plugin"
+    "esdoc-plugin",
+    "html"
   ],
   "author": "eoneill",
   "license": "ISC",
   "dependencies": {
+    "cheerio": "^1.0.0-rc.1",
     "minimatch": "^3.0.4"
   }
 }

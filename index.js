@@ -1,18 +1,12 @@
 const minimatch = require('minimatch');
+const path = require('path');
+const cheerio = require('cheerio');
 
 const config = {};
 const defaultOptions = {
   includes: ['**/*']
 };
 let options;
-
-function minimatchAny(fileName, patterns) {
-  return toArray(patterns).some((pattern) => {
-    if (minimatch(fileName, pattern)) {
-      return true;
-    }
-  });
-}
 
 function toArray(items) {
   // cast to an array if it's not
@@ -28,6 +22,11 @@ function withItems(items, callback) {
 
 function withOptions(callback) {
   withItems(options, (options) => {
+    if (typeof options === 'string' || Array.isArray(options)) {
+      options = {
+        transforms: options
+      };
+    }
     callback(Object.assign({}, defaultOptions, options));
   });
 }
@@ -42,40 +41,56 @@ exports.onHandleConfig = (event) => {
 };
 
 exports.onHandleHTML = (event) => {
+  const fileName = event.data.fileName;
+
+  // only process html files
+  if (path.extname(fileName) !== '.html') {
+    return;
+  }
+
+  // convention method to wrap minimatch for the given file
+  function is(...patterns) {
+    return patterns.some((pattern) => {
+      if (minimatch(fileName, pattern)) {
+        return true;
+      }
+    });
+  }
+
+  // create our cheerio instance...
+  const $ = cheerio.load(event.data.html);
+
+  // witch each option...
   withOptions((options) => {
-    const fileName = event.data.fileName;
+    const isIncluded = is(...toArray(options.includes));
+    const isExcluded = is(...toArray(options.excludes));
     // if the file is not included or the file is excluded...
-    if(!minimatchAny(fileName, options.includes) || minimatchAny(fileName, options.excludes)) {
+    if (!isIncluded || isExcluded) {
       // abort
       return;
     }
 
-    const scope = options.scope;
-    const openScope = scope ? `<${scope}[^>]+>` : '';
-    const closeScope = scope ? `<\\\/${scope}>` : '';
-    const rContent = new RegExp(`(${openScope})(.*)(${closeScope})`, 'mgi');
+    withItems(options.transforms, (script) => {
+      try {
+        const importPath = path.resolve(process.cwd(), script);
+        const transform = require(importPath);
 
-    event.data.html = event.data.html.replace(rContent, (match, open, content, close) => {
-      // add prefix/suffix to content
-      content = [
-        options.prefix,
-        content,
-        options.suffix
-      ].filter((item) => {
-        return !!item; // remove empty items
-      }).join('');
-
-      // replacer
-      withItems(options.replace, (replace) => {
-        const match = (replace.regex !== false) ? new RegExp(replace.match, replace.regex || 'gi') : replace.match;
-        content = content.replace(match, replace.with);
-      });
-
-      content = content.replace(/\$\{config\.([^\}]+)\}/gi, (match, key) => {
-        return config[key];
-      });
-
-      return open + content + close;
+        // invoke our transformer, passing
+        transform.call($, {
+          options,
+          config,
+          fileName,
+          is,
+          $
+        });
+      } catch(e) {
+        if (!options.throwOnError) {
+          throw e;
+        }
+        console.error(`[esdoc-plugin-transform-html] ${script} failed`, e);
+      }
     });
   });
+
+  event.data.html = $.html();
 }
