@@ -40,7 +40,7 @@ exports.onHandleConfig = (event) => {
   Object.assign(config, event.data.config);
 };
 
-exports.onHandleHTML = (event) => {
+exports.onHandleContent = exports.onHandleHTML = (event) => {
   const fileName = event.data.fileName;
 
   // only process html files
@@ -58,7 +58,7 @@ exports.onHandleHTML = (event) => {
   }
 
   // create our cheerio instance...
-  const $ = cheerio.load(event.data.html);
+  const $ = cheerio.load(event.data.content || event.data.html);
 
   // witch each option...
   withOptions((options) => {
@@ -92,5 +92,6 @@ exports.onHandleHTML = (event) => {
     });
   });
 
-  event.data.html = $.html();
-}
+
+  event.data.content = event.data.html = $.html();
+};

@@ -1,6 +1,6 @@
 {
   "name": "esdoc-plugin-transform-html",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "ESDoc plugin to transform generated HTML",
   "main": "index.js",
   "scripts": {
